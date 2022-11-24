@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.iparking.dao.DishonCarMapper">
+  <resultMap id="BaseResultMap" type="com.example.iparking.pojo.DishonCarDO">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="judge_phone" jdbcType="VARCHAR" property="judgePhone" />
+    <result column="car_number" jdbcType="VARCHAR" property="carNumber" />
+    <result column="dis_name" jdbcType="VARCHAR" property="disName" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="is_delete" jdbcType="BIT" property="isDelete" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, judge_phone, car_number, dis_name, update_time, is_delete
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from car_dishon
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectByCarNumber" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from car_dishon
+    where car_number = #{carNumber,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from car_dishon
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.example.iparking.pojo.DishonCarDO">
+    insert into car_dishon (id, judge_phone, car_number, 
+      dis_name, update_time, is_delete
+      )
+    values (#{id,jdbcType=INTEGER}, #{judgePhone,jdbcType=VARCHAR}, #{carNumber,jdbcType=VARCHAR}, 
+      #{disName,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{isDelete,jdbcType=BIT}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.example.iparking.pojo.DishonCarDO">
+    insert into car_dishon
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="judgePhone != null">
+        judge_phone,
+      </if>
+      <if test="carNumber != null">
+        car_number,
+      </if>
+      <if test="disName != null">
+        dis_name,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+      <if test="isDelete != null">
+        is_delete,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="judgePhone != null">
+        #{judgePhone,jdbcType=VARCHAR},
+      </if>
+      <if test="carNumber != null">
+        #{carNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="disName != null">
+        #{disName,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="isDelete != null">
+        #{isDelete,jdbcType=BIT},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.example.iparking.pojo.DishonCarDO">
+    update car_dishon
+    <set>
+      <if test="judgePhone != null">
+        judge_phone = #{judgePhone,jdbcType=VARCHAR},
+      </if>
+      <if test="carNumber != null">
+        car_number = #{carNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="disName != null">
+        dis_name = #{disName,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="isDelete != null">
+        is_delete = #{isDelete,jdbcType=BIT},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.example.iparking.pojo.DishonCarDO">
+    update car_dishon
+    set judge_phone = #{judgePhone,jdbcType=VARCHAR},
+      car_number = #{carNumber,jdbcType=VARCHAR},
+      dis_name = #{disName,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      is_delete = #{isDelete,jdbcType=BIT}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

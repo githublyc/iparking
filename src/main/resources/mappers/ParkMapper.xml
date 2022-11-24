@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.iparking.dao.ParkMapper">
+    <select id="getParkByParkKey" parameterType="java.lang.Integer" resultType="com.example.iparking.pojo.ParkDO">
+        select park_key,
+        park_name,
+        park_module,
+        park_type,
+        prepaid_leave_time,
+        park_space_open,
+        arrears,
+        payment_overtime,
+        overdue_admission,
+        overdue_admission_month,
+        ifnosense,
+        last_space,
+        prepaid_leave_time,
+        temporary_vehicle_mobilization,
+        detailed_address
+        from p_park
+        <where>
+            park_key = #{parkKey}
+        </where>
+        limit 1
+    </select>
+</mapper>
