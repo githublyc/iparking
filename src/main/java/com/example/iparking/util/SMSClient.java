@@ -37,7 +37,7 @@ public class SMSClient {
         stringBuffer.append(sendReq.getContent());
         stringBuffer.append(sendReq.getSign());
         stringBuffer.append(sendReq.getAddSerial());
-
+        //参数校验序列，生成方法：将ecName、apId、secretKey、mobiles、content、sign、addSerial按序拼接（无间隔符），通过MD5（32位小写）计算得出值。
         System.out.println(stringBuffer.toString());
         sendReq.setMac(Md5Util.MD5(stringBuffer.toString()).toLowerCase());
         System.out.println(sendReq.getMac());
