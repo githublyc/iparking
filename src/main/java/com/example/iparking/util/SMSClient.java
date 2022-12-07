@@ -12,12 +12,12 @@ import java.net.*;
 
 public class SMSClient {
 
-    private static String apId = "cs1124";
-    private static String secretKey = "CScs1129*";
+    private static String apId = "cs1130";
+    private static String secretKey = "CScs1201*";
     private static String ecName = "威海市城市开发投资有限公司";//集团名称
     private static String sign = "odeNKvvuy";//网关签名编码
     private static String addSerial = "";//拓展码 填空
-    public static String url = "http://112.35.1.155:1992/sms/norsubmit";//请求url
+    public static String url = "http://112.35.10.201:5992/sms/norsubmit";//请求url
 
     public static int sendMsg(String mobiles, String content) throws UnsupportedEncodingException {
         SendReq sendReq = new SendReq();
