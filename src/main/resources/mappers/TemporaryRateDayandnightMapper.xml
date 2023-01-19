@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.iparking.dao.TemporaryRateDayandnightMapper">
+
+	<!-- 根据 rateId 查询数据 -->
+	<select id="getDayAndNightMsgByRateId" parameterType="string" resultType="com.example.iparking.pojo.TemporaryRateDayandnight">
+		SELECT
+		id,
+		rate_id AS rateId,
+		rule_name AS ruleName,
+		start_time_day AS startTimeDay,
+		start_min_day AS startMinDay,
+		free_time_day AS freeTimeDay,
+		is_free_day AS isFreeDay,
+		first_time_type_day as firstTimeTypeDay ,
+		first_duration_day as firstDurationDay ,
+		first_amount_day as firstAmountDay,
+		time_unit_day as timeUnitDay,
+		unit_amount_day as unitAmountDay,
+		max_amount_day as maxAmountDay,
+		min_amount_day as minAmountDay,
+		start_time_night AS startTimeNight,
+		start_min_night AS startMinNight,
+		free_time_night AS freeTimeNight,
+		is_free_night AS isFreeNight,
+		first_time_type_night as firstTimeTypeNight,
+		first_duration_night as firstDurationNight,
+		first_amount_night as firstAmountNight,
+		time_unit_night as timeUnitNight,
+		unit_amount_night as unitAmountNight,
+		max_amount_night as maxAmountNight,
+		min_amount_night as minAmountNight,
+		`status`,
+		created_at AS createdAt,
+		updated_at AS updatedAt,
+		created_by AS createdBy,
+		updated_by AS updatedBy,
+		remarks,
+		tombstone,
+		type
+		FROM
+		p_temporary_rate_dayAndNight
+		where rate_id = #{rateId} and tombstone = '0'
+	</select>
+
+</mapper>
