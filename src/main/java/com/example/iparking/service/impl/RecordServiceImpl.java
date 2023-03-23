@@ -4,8 +4,11 @@ package com.example.iparking.service.impl;
 import com.ccb.alibaba.fastjson.util.TypeUtils;
 import com.example.iparking.dao.RecordMapper;
 import com.example.iparking.dao.TemporaryRateDayandnightMapper;
+import com.example.iparking.dao.TemporaryRateNormalMapper;
+import com.example.iparking.pojo.ParkRecordQuery;
 import com.example.iparking.pojo.Record;
 import com.example.iparking.pojo.TemporaryRateDayandnight;
+import com.example.iparking.pojo.TemporaryRateNormal;
 import com.example.iparking.service.RecordService;
 import com.example.iparking.util.DateTimeUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -34,9 +37,11 @@ public class RecordServiceImpl implements RecordService {
     @Autowired
     private TemporaryRateDayandnightMapper temporaryRateDayandnightMapper;
     @Autowired
+    private TemporaryRateNormalMapper temporaryRateNormalMapper;
+    @Autowired
     private RecordMapper recordMapper;
     @Override
-    public Map<String, Object> parkingAmount(String startTime, String endTime) throws ParseException {
+    public Map<String, Object> parkingAmount(String startTime, String endTime, int type) throws ParseException {
         log.info("计算费用入参：：startTime" + startTime);
         log.info("计算费用入参：：endTime" + endTime);
         // 定义 返回值
@@ -58,7 +63,7 @@ public class RecordServiceImpl implements RecordService {
             // 开始时间 大于结束时间 返回0
             returnMap.put("code", "200");
             returnMap.put("msg", "success");
-            returnMap.put("parkingAmount", 0);
+            returnMap.put("parkingAmount", payAmount);
             return returnMap;
         }
 
@@ -83,9 +88,123 @@ public class RecordServiceImpl implements RecordService {
         if (seconds > 0) {
             minutes = minutes + 1;
         }
+        if (type == 1){
+            TemporaryRateNormal temporaryRateNormal = temporaryRateNormalMapper.getNormalMsgByRateId("cdbbcce81f0a43f8a24885c5b855298f");
+            if (temporaryRateNormal == null) {
+                returnMap.put("code", "500");
+                returnMap.put("msg", "获取费率信息失败，请联系车场工作人员！");
+                return returnMap;
+            }
+            // 定义 待交金额
+            BigDecimal paidAmount = new BigDecimal(0);
+            // 判断 每日最高费用 是否为0
+            boolean maxFlag = false;
+            // 最高费用 大于 0
+            if (temporaryRateNormal.getMaxAmount().compareTo(BigDecimal.ZERO) > 0) {
+                maxFlag = true;
+            }
+            // 判断是否在免费时长内
+            if (days < 1) {
+                // 停车时长 小于 1小时
+                if (hours < 1) {
+                    if (minutes < temporaryRateNormal.getFreeTime()) {
+                        // 停车时长小于 免费时长
+                        // 免费
+                        paidAmount = paidAmount.add(new BigDecimal(0));
+                    } else {
+                        // 停车时长 大与免费时长
+                        minutes = minutes - temporaryRateNormal.getFreeTime();
+                        if (minutes > 0) {
+                            // 时长小于 一小时  按一小时获取
+                            // 判断 费用是否大于 最高收费，大于 按最高收费 收取
+                            if (maxFlag) {
+                                if (temporaryRateNormal.getAmount1().compareTo(temporaryRateNormal.getMaxAmount()) < 0) {
+                                    paidAmount = paidAmount.add(temporaryRateNormal.getAmount1());
+                                } else {
+                                    paidAmount = paidAmount.add(temporaryRateNormal.getMaxAmount());
+                                }
+                            }
+                        } else {
+                            paidAmount = paidAmount.add(new BigDecimal(0));
+                        }
+                    }
+                    returnMap.put("code", "200");
+                    returnMap.put("msg", "success");
+                    returnMap.put("parkingAmount", paidAmount);
+                    return returnMap;
+
+                } else {
+                    // 停车时长 大于 1 小时
+                    // 计算停车时长 （hours*60 + minutes）
+                    long allMinutes = minutes + 60 * hours;
+
+                    BigDecimal amount = new BigDecimal(0);
+
+                    // 判断 停车时长（分钟） 是否大于 免费停车时长
+                    if (allMinutes < temporaryRateNormal.getFreeTime()) {
+                        // 停车时长小于 免费时长 收费 0
+                        amount = amount.add(new BigDecimal(0));
+                    } else {
+                        // 停车时长 大于 免费时长
+                        // 如果停车时长的 minutes 大于0 小时数 +1
+                        if (minutes > 0) {
+                            hours = hours + 1;
+                        }
+                        // 遍历 小时数判断 缴费金额
+                        amount = getNormalAmount((int)hours, temporaryRateNormal);
+                        // 当 每日最高收费 不等于 0 时
+                        if (maxFlag) {
+                            // 判断 费用是否大于 最高收费，大于 按最高收费 收取
+                            if (amount.compareTo(temporaryRateNormal.getMaxAmount()) > 0) {
+                                paidAmount = temporaryRateNormal.getMaxAmount();
+                            } else {
+                                paidAmount = amount;
+                            }
+                        } else {
+                            paidAmount = amount;
+                        }
+                    }
+                }
+
+                returnMap.put("code", "200");
+                returnMap.put("msg", "success");
+                returnMap.put("parkingAmount", paidAmount);
+                return returnMap;
+
+            } else {
+                // 当 每日最高收费 不等于 0 时
+                if (maxFlag) {
+                    // 天数 乘以 每日最高收费
+                    paidAmount = temporaryRateNormal.getMaxAmount().multiply(new BigDecimal(days));
+                } else {
+                    // 天数 乘以 24个小时的 最高收费
+                    // 判断 24小时收费金额  是否 大于 每天最高收费
+                    if (temporaryRateNormal.getAmount24().compareTo(temporaryRateNormal.getMaxAmount()) > 0) {
+                        // 24小时 收费金额 大于 每天最高金额  按 最高金额收费
+                        paidAmount = temporaryRateNormal.getMaxAmount().multiply(new BigDecimal(days));
+                    } else {
+                        // 按 24 小时 收费金额收费
+                        paidAmount = temporaryRateNormal.getAmount24().multiply(new BigDecimal(days));
+                    }
+                }
+                // 停车时长中的 minutes 是否大于0  大于0 小时数hours + 1
+                if (minutes > 0) {
+                    hours = hours + 1;
+                }
+                BigDecimal hourAmount = getNormalAmount((int) hours, temporaryRateNormal);
+                paidAmount = paidAmount.add(hourAmount);
+
+                ;
+                returnMap.put("code", "200");
+                returnMap.put("msg", "success");
+                returnMap.put("parkingAmount", paidAmount);
+                return returnMap;
+            }
+        }
+        else if (type == 2){
                 // 白天黑夜
                 // 从数据库中获取 费率信息
-                TemporaryRateDayandnight entity = temporaryRateDayandnightMapper.getDayAndNightMsgByRateId("32ad920088cb42acb988b3d2f55575e0");
+                TemporaryRateDayandnight entity = temporaryRateDayandnightMapper.getDayAndNightMsgByRateId("c76523b43a4542bbafc575b919610d2f");//c76523b43a4542bbafc575b919610d2f
 
                 if (entity != null) {
                     // 判断 days 天数
@@ -578,21 +697,53 @@ public class RecordServiceImpl implements RecordService {
                     returnMap.put("msg", "获取费率信息失败，请联系车场工作人员！");
                     return returnMap;
                 }
+        }
+        else {
+            returnMap.put("code", "500");
+            returnMap.put("msg", "查询费率失败！");
+            return returnMap;
+        }
     }
 
     @Override
-    public BigDecimal countAmount() throws ParseException {
+    public BigDecimal countAmount(int id,int type) throws ParseException {
         List<Record> recordList = recordMapper.selectAll();
 
         Map<String, Object> returnMap = new HashMap<>();
         BigDecimal count = new BigDecimal(0);
 
         for (Record record : recordList){
-            returnMap = parkingAmount(record.getEntryTime(),record.getExitTime());
+            returnMap = parkingAmount(record.getEntryTime(),record.getExitTime(),type);
             BigDecimal nextAmount = (BigDecimal) returnMap.get("parkingAmount");
             count = count.add(nextAmount);
             System.out.println("计费金额" + count);
+            //输出计费金额
+            recordMapper.updateAmount(nextAmount,id);
+            id++;
         }
+        System.out.println("id:" + id);
+        return count;
+    }
+
+    public BigDecimal countAmountX(ParkRecordQuery parkRecordQuery) throws ParseException {
+        List<Integer> ids = recordMapper.selectRecordByQuery(parkRecordQuery);
+        String startTime;
+        String endTime;
+        Map<String, Object> returnMap = new HashMap<>();
+        BigDecimal count = new BigDecimal(0);
+
+        for (int id : ids){
+            startTime = recordMapper.selectStartTime(id);
+            endTime = recordMapper.selectEndTime(id);
+
+            if(StringUtils.isNotBlank(startTime) && StringUtils.isNotBlank(endTime)) {
+                returnMap = parkingAmount(startTime,endTime,2);
+                BigDecimal nextAmount = (BigDecimal) returnMap.get("parkingAmount");
+                count = count.add(nextAmount);
+                System.out.println("计费金额" + count);
+            }
+        }
+
         return count;
     }
 
@@ -1112,6 +1263,84 @@ public class RecordServiceImpl implements RecordService {
         }
     }
 
-
+    public BigDecimal getNormalAmount(int hours, TemporaryRateNormal normal) {
+        BigDecimal paidAmount = new BigDecimal(0);
+        // 遍历 小时数判断 缴费金额
+        switch (hours) {
+            case 1:
+                paidAmount = normal.getAmount1();
+                break;
+            case 2:
+                paidAmount = normal.getAmount2();
+                break;
+            case 3:
+                paidAmount = normal.getAmount3();
+                break;
+            case 4:
+                paidAmount = normal.getAmount4();
+                break;
+            case 5:
+                paidAmount = normal.getAmount5();
+                break;
+            case 6:
+                paidAmount = normal.getAmount6();
+                break;
+            case 7:
+                paidAmount = normal.getAmount7();
+                break;
+            case 8:
+                paidAmount = normal.getAmount8();
+                break;
+            case 9:
+                paidAmount = normal.getAmount9();
+                break;
+            case 10:
+                paidAmount = normal.getAmount10();
+                break;
+            case 11:
+                paidAmount = normal.getAmount11();
+                break;
+            case 12:
+                paidAmount = normal.getAmount12();
+                break;
+            case 13:
+                paidAmount = normal.getAmount13();
+                break;
+            case 14:
+                paidAmount = normal.getAmount14();
+                break;
+            case 15:
+                paidAmount = normal.getAmount15();
+                break;
+            case 16:
+                paidAmount = normal.getAmount16();
+                break;
+            case 17:
+                paidAmount = normal.getAmount17();
+                break;
+            case 18:
+                paidAmount = normal.getAmount18();
+                break;
+            case 19:
+                paidAmount = normal.getAmount19();
+                break;
+            case 20:
+                paidAmount = normal.getAmount20();
+                break;
+            case 21:
+                paidAmount = normal.getAmount21();
+                break;
+            case 22:
+                paidAmount = normal.getAmount22();
+                break;
+            case 23:
+                paidAmount = normal.getAmount23();
+                break;
+            case 24:
+                paidAmount = normal.getAmount24();
+                break;
+        }
+        return paidAmount;
+    }
 
 }

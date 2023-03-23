@@ -1,5 +1,6 @@
 package com.example.iparking.service;
 
+import com.example.iparking.pojo.ParkRecordQuery;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +19,24 @@ public class RecordServiceTest {
     @Test
     public void parkingAmount() throws ParseException {
         Map<String, Object> returnMap = new HashMap<>();
-        returnMap = recordService.parkingAmount("2023-01-16 09:22:28","2023-01-17 08:51:59");//"2023-01-16 09:22:28","2023-01-17 08:51:59"
+        returnMap = recordService.parkingAmount("2022-08-26 00:00:00","2023-01-17 00:00:00",2);//"2023-01-16 09:22:28","2023-01-17 08:51:59"
         System.out.println(returnMap.get("parkingAmount"));
     }
     @Test
     public void countAmount() throws ParseException {
-        BigDecimal tst = recordService.countAmount();
-        System.out.println(tst);
+        int id =23873;
+        BigDecimal tst = recordService.countAmount(id,1);
+        System.out.println("end:" + tst);
+    }
+    @Test
+    public void countAmountX() throws ParseException {
+        ParkRecordQuery parkRecordQuery = new ParkRecordQuery();
+        parkRecordQuery.setVehicleType("1");
+        parkRecordQuery.setParkKeyList("363");
+        parkRecordQuery.setGcExitTimeStart("2022-08-26 00:00:00");
+        parkRecordQuery.setGcExitTimeEnd("2023-01-17 00:00:00");
+        parkRecordQuery.setLotModel("2");
+        BigDecimal tst = recordService.countAmountX(parkRecordQuery);
+        System.out.println("end:" + tst);
     }
 }

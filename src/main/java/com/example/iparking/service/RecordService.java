@@ -1,5 +1,7 @@
 package com.example.iparking.service;
 
+import com.example.iparking.pojo.ParkRecordQuery;
+
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.Map;
@@ -12,7 +14,9 @@ import java.util.Map;
  * Copyright © MyCompany
 */
 public interface RecordService {
-    public Map<String, Object> parkingAmount(String startTime, String endTime) throws ParseException;
+    Map<String, Object> parkingAmount(String startTime, String endTime, int type) throws ParseException;
 
-    public BigDecimal countAmount() throws ParseException;
+    BigDecimal countAmount(int id, int type) throws ParseException;
+
+    BigDecimal countAmountX(ParkRecordQuery parkRecordQuery) throws ParseException;
 }

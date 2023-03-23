@@ -7,4 +7,249 @@
         FROM
         record
     </select>
+
+    <select id="selectRecordByQuery" resultType="java.lang.Integer" parameterType="com.example.iparking.pojo.ParkRecordQuery">
+        SELECT
+        r.record_key
+        FROM p_park_record r
+        left join p_park_area pa on r.area_key = pa.id
+        left join p_park p on r.park_key = p.park_key
+        <if test="photoTimeDifference != null and photoTimeDifference != ''">
+            LEFT JOIN ( SELECT min( created_at ) as created_at, record_key FROM p_park_record_resume  GROUP BY record_key ) pp
+            ON pp.record_key = r.record_key
+        </if>
+        <where>
+            p.if_accident_park =1
+            AND r.payment_status <![CDATA[ <> ]]> '7'
+            <!--and r.plate_number is not null-->
+            <if test="carNum != null and carNum != ''" >
+                AND r.plate_number LIKE CONCAT('%',#{carNum,jdbcType=VARCHAR},'%')
+            </if>
+            <if test="imgNumber !=null and imgNumber != ''">
+                <!--               <choose>-->
+                <!--                   <when test="imgNumber ==1">-->
+                <!--                       and r.img_number >= 1-->
+                <!--                   </when>-->
+                <!--                   <otherwise>-->
+                <!--                       and r.img_number=0-->
+                <!--                   </otherwise>-->
+                <!--               </choose>-->
+                and r.img_number >= #{imgNumBefore}
+                and r.img_number &lt;= #{imgNumAfter}
+            </if>
+            <!--           <if test="minutes != null and minutes != 0" >
+                           AND TIMESTAMPDIFF(
+                           MINUTE,
+                           IFNULL( sensor_entry_time, artificial_entry_time ),
+                           IFNULL( sensor_exit_time, artificial_exit_time )) >= #{minutes}
+                       </if>-->
+            <if test="areaKey != null">
+                AND r.area_key = #{areaKey}
+            </if>
+            <if test="minutes != null and minutes != ''">
+                AND TIMESTAMPDIFF(
+                MINUTE,
+                IFNULL( sensor_entry_time, artificial_entry_time ),
+                IFNULL( sensor_exit_time, artificial_exit_time )) &gt;= #{minutesBefore}
+                AND TIMESTAMPDIFF(
+                MINUTE,
+                IFNULL( sensor_entry_time, artificial_entry_time ),
+                IFNULL( sensor_exit_time, artificial_exit_time )) &lt;= #{minutesAfter}
+            </if>
+            <if test="vehicleType != null and vehicleType != ''" >
+                AND r.vehicle_type = #{vehicleType,jdbcType=VARCHAR}
+            </if>
+            <if test="berthNum != null and berthNum != ''" >
+                AND r.space_code LIKE CONCAT('%',#{berthNum,jdbcType=VARCHAR},'%')
+            </if>
+            <if test="lotId != null and lotId != ''" >
+                AND r.park_key = #{lotId,jdbcType=INTEGER}
+            </if>
+            <if test="parkKeyList != null and parkKeyList != ''" >
+                AND FIND_IN_SET( r.park_key, #{parkKeyList,jdbcType=VARCHAR} )
+            </if>
+            <if test="lotModel != null and lotModel != ''" >
+                AND r.park_module = #{lotModel,jdbcType=VARCHAR}
+            </if>
+            <if test="chargingStatus != null and chargingStatus != ''" >
+                AND r.payment_status = #{chargingStatus,jdbcType=VARCHAR}
+            </if>
+            <if test="reason != null and reason != ''">
+                AND r.reason = #{reason,jdbcType=VARCHAR}
+            </if>
+            <if test="source != null and source == 0 " >
+                AND r.enter_way = #{source,jdbcType=VARCHAR}
+
+                <if test="entryTimeStart != null and entryTimeStart != ''" >
+                    AND r.sensor_entry_time &gt;= #{entryTimeStart,jdbcType=VARCHAR}
+                </if>
+                <if test="entryTimeEnd != null and entryTimeEnd != ''" >
+                    AND r.sensor_entry_time &lt;= #{entryTimeEnd,jdbcType=VARCHAR}
+                </if>
+                <if test="exitTimeStart != null and exitTimeStart != ''" >
+                    AND r.sensor_exit_time &gt;= #{exitTimeStart,jdbcType=VARCHAR}
+                </if>
+                <if test="exitTimeEnd != null and exitTimeEnd != ''" >
+                    AND r.sensor_exit_time &lt;= #{exitTimeEnd,jdbcType=VARCHAR}
+                </if>
+
+            </if>
+
+
+            <if test="source != null and source == 1 " >
+                AND r.enter_way = #{source,jdbcType=VARCHAR}
+                <if test="entryTimeStart != null and entryTimeStart != ''" >
+                    AND r.artificial_entry_time &gt;= #{entryTimeStart,jdbcType=VARCHAR}
+                </if>
+                <if test="entryTimeEnd != null and entryTimeEnd != ''" >
+                    AND r.artificial_entry_time &lt;= #{entryTimeEnd,jdbcType=VARCHAR}
+                </if>
+                <if test="exitTimeStart != null and exitTimeStart != ''" >
+                    AND r.artificial_exit_time &gt;= #{exitTimeStart,jdbcType=VARCHAR}
+                </if>
+                <if test="exitTimeEnd != null and exitTimeEnd != ''" >
+                    AND r.artificial_exit_time &lt;= #{exitTimeEnd,jdbcType=VARCHAR}
+                </if>
+            </if>
+
+            <if test="source != null and source == 2 " >
+                <if test="entryTimeStart != null and entryTimeStart != ''
+                    or (entryTimeEnd != null and entryTimeEnd != '') ">
+                    and (
+                    <if test="entryTimeStart != null and entryTimeStart != ''" >
+                        r.sensor_entry_time &gt;= #{entryTimeStart,jdbcType=VARCHAR}
+                    </if>
+                    <if test="entryTimeEnd != null and entryTimeEnd != ''" >
+                        AND r.sensor_entry_time &lt;= #{entryTimeEnd,jdbcType=VARCHAR}
+                    </if>
+                    )
+                </if>
+
+                <if test="exitTimeStart != null and exitTimeStart != ''
+                or (exitTimeEnd != null and exitTimeEnd != '')">
+                    and (
+                    <if test="exitTimeStart != null and exitTimeStart != ''" >
+                        r.sensor_exit_time &gt;= #{exitTimeStart,jdbcType=VARCHAR}
+                    </if>
+                    <if test="exitTimeEnd != null and exitTimeEnd != ''" >
+                        AND r.sensor_exit_time &lt;= #{exitTimeEnd,jdbcType=VARCHAR}
+                    </if>
+
+                    )
+                </if>
+
+                <if test="entryTimeStart != null and entryTimeStart != ''
+                or (entryTimeEnd != null and entryTimeEnd != '')">
+                    AND (
+                    <if test="entryTimeStart != null and entryTimeStart != ''" >
+                        r.artificial_entry_time &gt;= #{entryTimeStart,jdbcType=VARCHAR}
+                    </if>
+                    <if test="entryTimeEnd != null and entryTimeEnd != ''" >
+                        AND r.artificial_entry_time &lt;= #{entryTimeEnd,jdbcType=VARCHAR}
+                    </if>
+                    )
+                </if>
+
+                <if test="exitTimeStart != null and exitTimeStart != ''
+                or (exitTimeEnd != null and exitTimeEnd != '')">
+                    AND (
+                    <if test="exitTimeStart != null and exitTimeStart != ''" >
+                        r.artificial_exit_time &gt;= #{exitTimeStart,jdbcType=VARCHAR}
+                    </if>
+                    <if test="exitTimeEnd != null and exitTimeEnd != ''" >
+                        AND r.artificial_exit_time &lt;= #{exitTimeEnd,jdbcType=VARCHAR}
+                    </if>
+                    )
+                </if>
+
+            </if>
+
+
+            <if test="exitTimeStart != null and exitTimeStart != ''
+                and (exitTimeEnd != null and exitTimeEnd != '')">
+                and (
+                (r.sensor_exit_time &gt;= #{exitTimeStart,jdbcType=VARCHAR}
+                AND r.sensor_exit_time &lt;= #{exitTimeEnd,jdbcType=VARCHAR})
+                or (
+                r.artificial_exit_time &gt;= #{exitTimeStart,jdbcType=VARCHAR}
+                AND r.artificial_exit_time &lt;= #{exitTimeEnd,jdbcType=VARCHAR})
+                )
+            </if>
+
+            <if test="entryTimeStart != null and entryTimeStart != ''
+                and (entryTimeEnd != null and entryTimeEnd != '')">
+                and (
+                (r.sensor_entry_time &gt;= #{entryTimeStart,jdbcType=VARCHAR}
+                AND r.sensor_entry_time &lt;= #{entryTimeEnd,jdbcType=VARCHAR})
+                or (
+                r.artificial_entry_time &gt;= #{entryTimeStart,jdbcType=VARCHAR}
+                AND r.artificial_entry_time &lt;= #{entryTimeEnd,jdbcType=VARCHAR})
+                )
+            </if>
+
+            <if test="carColor != null and carColor != ''" >
+                AND r.plate_color = #{carColor,jdbcType=VARCHAR}
+            </if>
+            <if test="gcEntryTimeStart != null and gcEntryTimeStart != ''" >
+                AND r.sensor_entry_time &gt;= #{gcEntryTimeStart,jdbcType=VARCHAR}
+            </if>
+            <if test="gcEntryTimeEnd != null and gcEntryTimeEnd != ''" >
+                AND r.sensor_entry_time &lt;= #{gcEntryTimeEnd,jdbcType=VARCHAR}
+            </if>
+            <if test="gcExitTimeStart != null and gcExitTimeStart != ''" >
+                AND r.sensor_exit_time &gt;= #{gcExitTimeStart,jdbcType=VARCHAR}
+            </if>
+            <if test="gcExitTimeEnd != null and gcExitTimeEnd != ''" >
+                AND r.sensor_exit_time &lt;= #{gcExitTimeEnd,jdbcType=VARCHAR}
+            </if>
+
+            <if test="auditType != null and auditType != ''" >
+                AND r.verify_way = #{auditType,jdbcType=VARCHAR}
+            </if>
+            <if test="status != null and status != ''" >
+                AND r.stop_status = #{status,jdbcType=VARCHAR}
+            </if>
+            <!--           <if test="imgNumber != null and imgNumber != ''" >-->
+            <!--               AND r.img_number = #{imgNumber,jdbcType=INTEGER}-->
+            <!--           </if>-->
+            <if test="clearVerifyStatus != null and clearVerifyStatus != ''" >
+                AND r.clear_verify_status = #{clearVerifyStatus,jdbcType=VARCHAR}
+            </if>
+            <if test="auditStatus != null and auditStatus != ''" >
+                AND r.verify_status = #{auditStatus,jdbcType=VARCHAR}
+            </if>
+            <if test="photoTimeDifference != null and photoTimeDifference != ''">
+                AND TIMESTAMPDIFF( MINUTE, r.sensor_entry_time, pp.created_at ) >= #{photoTimeDifferenceBefore,jdbcType=INTEGER}
+                AND TIMESTAMPDIFF( MINUTE, r.sensor_entry_time, pp.created_at ) &lt; #{photoTimeDifferenceAfter,jdbcType=INTEGER}
+            </if>
+        </where>
+        ORDER BY r.record_key desc,r.verify_status asc
+    </select>
+    <select id="selectEndTime" resultType="java.lang.String" parameterType="int">
+        SELECT
+        created_at
+        FROM
+        p_park_record_resume rr
+        WHERE
+        rr.operation_type = "自动驶离"
+        AND
+        rr.record_key = #{id}
+        LIMIT 1
+    </select>
+    <select id="selectStartTime" resultType="java.lang.String" parameterType="int">
+        SELECT
+        created_at
+        FROM
+        p_park_record_resume rr
+        WHERE
+        rr.operation_type = "自动驶入"
+        AND
+        rr.record_key = #{id}
+        LIMIT 1
+    </select>
+    <update id="updateAmount">
+        UPDATE record
+        SET amount = #{amount}
+        WHERE id = #{id}
+    </update>
 </mapper>

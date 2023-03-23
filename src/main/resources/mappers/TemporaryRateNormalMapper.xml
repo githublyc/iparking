@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.example.iparking.dao.TemporaryRateNormalMapper">
+
+    <!-- 根据 rateId 查询数据 -->
+    <select id="getNormalMsgByRateId" parameterType="string" resultType="com.example.iparking.pojo.TemporaryRateNormal">
+        SELECT
+            id,
+            rate_id AS rateId,
+            rule_name AS ruleName,
+            max_amount AS maxAmount,
+            free_time AS freeTime,
+            is_free AS isFree,
+            amount_1 AS amount1 ,
+            amount_2 AS amount2 ,
+            amount_3 AS amount3 ,
+            amount_4 AS amount4 ,
+            amount_5 AS amount5 ,
+            amount_6 AS amount6 ,
+            amount_7 AS amount7 ,
+            amount_8 AS amount8 ,
+            amount_9 AS amount9 ,
+            amount_10 AS amount10 ,
+            amount_11 AS amount11 ,
+            amount_12 AS amount12 ,
+            amount_13 AS amount13 ,
+            amount_14 AS amount14 ,
+            amount_15 AS amount15 ,
+            amount_16 AS amount16 ,
+            amount_17 AS amount17 ,
+            amount_18 AS amount18 ,
+            amount_19 AS amount19 ,
+            amount_20 AS amount20 ,
+            amount_21 AS amount21 ,
+            amount_22 AS amount22 ,
+            amount_23 AS amount23 ,
+            amount_24 AS amount24,
+            `status`,
+            created_at AS createdAt,
+            updated_at AS updatedAt,
+            created_by AS createdBy,
+            updated_by AS updatedBy,
+            remarks,
+            tombstone
+        FROM
+            p_temporary_rate_normal
+        where rate_id = #{rateId} and tombstone = '0'
+    </select>
+</mapper>
